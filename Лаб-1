@@ -1,0 +1,182 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+
+int FibonacciTask1(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    return FibonacciTask1(n - 1) + FibonacciTask1(n - 2);
+}
+
+std::string Task1(int count) {
+    if (count > 40) {
+        throw std::invalid_argument("Кількість елементів не повинна перевищувати 40.");
+    }
+
+    std::stringstream ss;
+    for (int i = 0; i < count; ++i) {
+        ss << FibonacciTask1(i);
+        if (i < count - 1) {
+            ss << ", "; // Додаємо роздільник між числами
+        }
+    }
+    return ss.str();
+}
+
+int main() {
+    int count;
+    std::cout << "Введіть кількість елементів Фібоначчі (не більше 40): ";
+    std::cin >> count;
+
+    try {
+        std::string result = Task1(count);
+        std::cout << "Послідовність Фібоначчі: " << result << std::endl;
+    } catch (const std::invalid_argument& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
+}
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+std::vector<int> cache(41, -1); // Кеш для зберігання обчислених значень
+
+int FibonacciTask2(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    // Перевірка, чи вже обчислено
+    if (cache[n] != -1) {
+        return cache[n];
+    }
+    // Зберігаємо обчислене значення у кеш
+    cache[n] = FibonacciTask2(n - 1) + FibonacciTask2(n - 2);
+    return cache[n];
+}
+
+std::string Task2(int count) {
+    if (count > 40) {
+        throw std::invalid_argument("Кількість елементів не повинна перевищувати 40.");
+    }
+
+    std::stringstream ss;
+    for (int i = 0; i < count; ++i) {
+        ss << FibonacciTask2(i);
+        if (i < count - 1) {
+            ss << ", "; // Додаємо роздільник між числами
+        }
+    }
+    return ss.str();
+}
+
+int main() {
+    int count;
+    std::cout << "Введіть кількість елементів Фібоначчі (не більше 40): ";
+    std::cin >> count;
+
+    try {
+        std::string result = Task2(count);
+        std::cout << "Послідовність Фібоначчі: " << result << std::endl;
+    } catch (const std::invalid_argument& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
+}
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <tuple>
+
+std::vector<std::vector<int>> readMazeFromFile(const std::string& filename, int rowsCount, int colsCount) {
+    std::vector<std::vector<int>> maze(rowsCount, std::vector<int>(colsCount));
+    std::ifstream file(filename);
+    
+    if (!file.is_open()) {
+        throw std::runtime_error("Не вдалося відкрити файл.");
+    }
+
+    for (int i = 0; i < rowsCount; ++i) {
+        for (int j = 0; j < colsCount; ++j) {
+            file >> maze[i][j];
+        }
+    }
+
+    return maze;
+}
+
+bool findExitDFS(const std::vector<std::vector<int>>& maze, int row, int col, std::vector<std::pair<int, int>>& path) {
+    int rows = maze.size();
+    int cols = maze[0].size();
+
+    // Перевірка меж і чи є стіною
+    if (row < 0 || row >= rows || col < 0 || col >= cols || maze[row][col] == 1) {
+        return false;
+    }
+
+    // Якщо знайдено вихід
+    if (maze[row][col] == 9) {
+        path.emplace_back(row, col);
+        return true;
+    }
+
+    // Позначаємо комірку як відвідану
+    maze[row][col] = 1; // Ставимо стіну, щоб уникнути повторного відвідування
+    path.emplace_back(row, col); // Додаємо до шляху
+
+    // Спробуємо всі чотири напрямки
+    if (findExitDFS(maze, row + 1, col, path) ||  // вниз
+        findExitDFS(maze, row - 1, col, path) ||  // вверх
+        findExitDFS(maze, row, col + 1, path) ||  // вправо
+        findExitDFS(maze, row, col - 1, path)) {  // вліво
+        return true;
+    }
+
+    // Якщо виходу немає, видаляємо комірку з шляху
+    path.pop_back();
+    return false;
+}
+
+std::string Task3(const std::string& textFile, int rowsCount, int colsCount, int startRow, int startCol) {
+    auto maze = readMazeFromFile(textFile, rowsCount, colsCount);
+    std::vector<std::pair<int, int>> path;
+
+    if (findExitDFS(maze, startRow, startCol, path)) {
+        std::stringstream ss;
+        for (const auto& p : path) {
+            ss << "(" << p.first << ", " << p.second << ") ";
+        }
+        return ss.str();
+    } else {
+        return "Вихід не знайдено.";
+    }
+}
+
+int main() {
+    std::string filename;
+    int rows, cols, startRow, startCol;
+
+    std::cout << "Введіть назву файлу: ";
+    std::cin >> filename;
+    std::cout << "Введіть кількість рядків: ";
+    std::cin >> rows;
+    std::cout << "Введіть кількість стовпців: ";
+    std::cin >> cols;
+    std::cout << "Введіть початкові координати (рядок, стовпець): ";
+    std::cin >> startRow >> startCol;
+
+    try {
+        std::string result = Task3(filename, rows, cols, startRow, startCol);
+        std::cout << "Шлях до виходу: " << result << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
+}
